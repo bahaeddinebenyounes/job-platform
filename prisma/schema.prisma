@@ -13,3 +13,153 @@ datasource db {
   provider = "postgresql"
   url      = env("DATABASE_URL")
 }
+enum Role {
+  CANDIDATE
+  EMPLOYER
+  ADMIN
+}
+
+enum JobType {
+  FULL_TIME
+  PART_TIME
+  CONTRACT
+  INTERNSHIP
+  FREELANCE
+}
+
+enum JobStatus {
+  DRAFT
+  OPEN
+  CLOSED
+}
+
+enum ApplicationStatus {
+  PENDING
+  REVIEWED
+  SHORTLISTED
+  REJECTED
+  ACCEPTED
+}
+
+model User {
+  id               String            @id @default(cuid())
+  email            String            @unique
+  passwordHash     String
+  name             String
+  role             Role              @default(CANDIDATE)
+  createdAt        DateTime          @default(now())
+  updatedAt        DateTime          @updatedAt
+  candidateProfile CandidateProfile?
+}
+
+model CandidateProfile {
+  id           String           @id @default(cuid())
+  userId       String           @unique
+  user         User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  phone        String?
+  location     String?
+  headline     String?
+  bio          String?          @db.Text
+  createdAt    DateTime         @default(now())
+  updatedAt    DateTime         @updatedAt
+  cvs          CV[]
+  skills       CandidateSkill[]
+  experiences  Experience[]
+  applications Application[]
+  matches      AIMatch[]
+}
+
+model CV {
+  id           String           @id @default(cuid())
+  candidateId  String
+  candidate    CandidateProfile @relation(fields: [candidateId], references: [id], onDelete: Cascade)
+  fileName     String
+  fileUrl      String
+  parsedText   String?          @db.Text
+  isActive     Boolean          @default(true)
+  uploadedAt   DateTime         @default(now())
+  applications Application[]
+
+  @@index([candidateId])
+}
+
+model Skill {
+  id         String           @id @default(cuid())
+  name       String           @unique
+  candidates CandidateSkill[]
+}
+
+model CandidateSkill {
+  candidateId String
+  skillId     String
+  level       Int?
+  candidate   CandidateProfile @relation(fields: [candidateId], references: [id], onDelete: Cascade)
+  skill       Skill            @relation(fields: [skillId], references: [id], onDelete: Cascade)
+
+  @@id([candidateId, skillId])
+}
+
+model Experience {
+  id          String           @id @default(cuid())
+  candidateId String
+  candidate   CandidateProfile @relation(fields: [candidateId], references: [id], onDelete: Cascade)
+  title       String
+  companyName String
+  startDate   DateTime
+  endDate     DateTime?
+  description String?          @db.Text
+
+  @@index([candidateId])
+}
+
+model Company {
+  id          String   @id @default(cuid())
+  name        String
+  location    String?
+  description String?  @db.Text
+  createdAt   DateTime @default(now())
+  jobs        Job[]
+}
+
+model Job {
+  id           String        @id @default(cuid())
+  companyId    String
+  company      Company       @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  title        String
+  description  String        @db.Text
+  location     String?
+  type         JobType       @default(FULL_TIME)
+  status       JobStatus     @default(OPEN)
+  createdAt    DateTime      @default(now())
+  applications Application[]
+  matches      AIMatch[]
+
+  @@index([companyId])
+}
+
+model Application {
+  id          String            @id @default(cuid())
+  candidateId String
+  candidate   CandidateProfile  @relation(fields: [candidateId], references: [id], onDelete: Cascade)
+  jobId       String
+  job         Job               @relation(fields: [jobId], references: [id], onDelete: Cascade)
+  cvId        String?
+  cv          CV?               @relation(fields: [cvId], references: [id], onDelete: SetNull)
+  coverLetter String?           @db.Text
+  status      ApplicationStatus @default(PENDING)
+  createdAt   DateTime          @default(now())
+
+  @@unique([candidateId, jobId])
+}
+
+model AIMatch {
+  id          String           @id @default(cuid())
+  candidateId String
+  candidate   CandidateProfile @relation(fields: [candidateId], references: [id], onDelete: Cascade)
+  jobId       String
+  job         Job              @relation(fields: [jobId], references: [id], onDelete: Cascade)
+  score       Float
+  createdAt   DateTime         @default(now())
+
+  @@unique([candidateId, jobId])
+}
