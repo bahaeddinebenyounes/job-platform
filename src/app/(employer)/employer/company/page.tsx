@@ -14,7 +14,7 @@ const BADGE = {
 
 export default async function CompanyPage() {
   const user = await getSessionUser();
-  if (!user) return <p className="p-6">Non connecté : ouvre /api/dev/login?email=employer@test.local</p>;
+  if (!user) redirect("/login");
   if (user.role !== "EMPLOYER") redirect("/");
 
   const { companyId } = await getEmployerContext();

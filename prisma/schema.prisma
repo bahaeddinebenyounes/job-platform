@@ -7,9 +7,7 @@ datasource db {
   provider = "postgresql"
   url      = env("DATABASE_URL")
 }
-<<<<<<< HEAD
 
-// ───────── Utilisateurs ─────────
 enum Role {
   CANDIDATE
   EMPLOYER
@@ -18,178 +16,21 @@ enum Role {
   ADMIN
 }
 
-model User {
-  id               String            @id @default(cuid())
-  email            String            @unique
-  role             Role
-  createdAt        DateTime          @default(now())
-  employerProfile  EmployerProfile?
-  candidateProfile CandidateProfile?
-}
-
-// ───────── Référentiels ─────────
-model Place {
-  id          String             @id @default(cuid())
-  name        String
-  governorate String
-  latitude    Float
-  longitude   Float
-  companies   Company[]
-  jobs        Job[]
-  candidates  CandidateProfile[]
-
-  @@unique([governorate, name])
-}
-
-model Profession {
-  id         String             @id @default(cuid())
-  slug       String             @unique
-  nameFr     String
-  category   String
-  jobs       Job[]
-  candidates CandidateProfile[]
-=======
-enum Role {
-  CANDIDATE
-  EMPLOYER
-  ADMIN
-}
-
-enum JobType {
-  FULL_TIME
-  PART_TIME
-  CONTRACT
-  INTERNSHIP
-  FREELANCE
-}
-
-enum JobStatus {
-  DRAFT
-  OPEN
-  CLOSED
-}
-
-enum ApplicationStatus {
-  PENDING
-  REVIEWED
-  SHORTLISTED
-  REJECTED
-  ACCEPTED
-}
-
-model User {
-  id               String            @id @default(cuid())
-  email            String            @unique
-  passwordHash     String
-  name             String
-  role             Role              @default(CANDIDATE)
-  createdAt        DateTime          @default(now())
-  updatedAt        DateTime          @updatedAt
-  candidateProfile CandidateProfile?
-}
-
-model CandidateProfile {
-  id           String           @id @default(cuid())
-  userId       String           @unique
-  user         User             @relation(fields: [userId], references: [id], onDelete: Cascade)
-  phone        String?
-  location     String?
-  headline     String?
-  bio          String?          @db.Text
-  createdAt    DateTime         @default(now())
-  updatedAt    DateTime         @updatedAt
-  cvs          CV[]
-  skills       CandidateSkill[]
-  experiences  Experience[]
-  applications Application[]
-  matches      AIMatch[]
-}
-
-model CV {
-  id           String           @id @default(cuid())
-  candidateId  String
-  candidate    CandidateProfile @relation(fields: [candidateId], references: [id], onDelete: Cascade)
-  fileName     String
-  fileUrl      String
-  parsedText   String?          @db.Text
-  isActive     Boolean          @default(true)
-  uploadedAt   DateTime         @default(now())
-  applications Application[]
-
-  @@index([candidateId])
->>>>>>> main
-}
-
-model Skill {
-  id         String           @id @default(cuid())
-<<<<<<< HEAD
-  slug       String           @unique
-  name       String
-  aliases    String[]
-  jobs       JobSkill[]
-  candidates CandidateSkill[]
-}
-
-// ───────── Entreprise ─────────
-enum CompanySize {
-  SIZE_1_10
-  SIZE_11_50
-  SIZE_51_200
-  SIZE_201_1000
-  SIZE_1000_PLUS
-}
-
-enum HiringStatus {
-  ACTIVELY_HIRING
-  OPEN_TO_APPLICATIONS
-  NOT_HIRING
-}
-
-model EmployerProfile {
-  id        String   @id @default(cuid())
-  userId    String   @unique
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  firstName String?
-  lastName  String?
-  jobTitle  String?
-  companyId String?
-  company   Company? @relation(fields: [companyId], references: [id])
-  createdAt DateTime @default(now())
-}
-
-model Company {
-  id            String       @id @default(cuid())
-  name          String
-  slug          String       @unique
-  patenteNumber String?      @unique
-  employeeCount Int?
-  description   String?
-  industry      String?
-  size          CompanySize?
-  website       String?
-  contactEmail  String?
-  phone         String?
-  address       String?
-  placeId       String?
-  place         Place?       @relation(fields: [placeId], references: [id])
-  logoKey       String?
-
-  hiringStatus          HiringStatus @default(NOT_HIRING)
-  hiringNote            String?
-  hiringStatusUpdatedAt DateTime     @default(now())
-
-  employers EmployerProfile[]
-  jobs      Job[]
-  createdAt DateTime          @default(now())
-  updatedAt DateTime          @updatedAt
-}
-
-// ───────── Offres d'emploi ─────────
 enum JobStatus {
   DRAFT
   PUBLISHED
   CLOSED
   EXPIRED
+}
+
+enum ApplicationStatus {
+  PENDING
+  REVIEWING
+  SHORTLISTED
+  INTERVIEW
+  ACCEPTED
+  REJECTED
+  WITHDRAWN
 }
 
 enum ContractType {
@@ -227,17 +68,182 @@ enum LanguageLevel {
   NATIVE
 }
 
+enum ProfileVisibility {
+  HIDDEN
+  APPLICANTS_ONLY
+  SEARCHABLE
+}
+
+enum CompanySize {
+  SIZE_1_10
+  SIZE_11_50
+  SIZE_51_200
+  SIZE_201_1000
+  SIZE_1000_PLUS
+}
+
+enum HiringStatus {
+  ACTIVELY_HIRING
+  OPEN_TO_APPLICATIONS
+  NOT_HIRING
+}
+
+model User {
+  id                       String                    @id @default(cuid())
+  email                    String                    @unique
+  passwordHash             String
+  name                     String
+  role                     Role                      @default(CANDIDATE)
+  createdAt                DateTime                  @default(now())
+  updatedAt                DateTime                  @updatedAt
+  candidateProfile         CandidateProfile?
+  employerProfile          EmployerProfile?
+  applicationStatusChanges ApplicationStatusEvent[]
+}
+
+model Place {
+  id          String             @id @default(cuid())
+  name        String
+  governorate String
+  latitude    Float
+  longitude   Float
+  companies   Company[]
+  jobs        Job[]
+  candidates  CandidateProfile[]
+
+  @@unique([governorate, name])
+}
+
+model Profession {
+  id         String             @id @default(cuid())
+  slug       String             @unique
+  nameFr     String
+  category   String
+  jobs       Job[]
+  candidates CandidateProfile[]
+}
+
+model Skill {
+  id         String           @id @default(cuid())
+  name       String           @unique
+  slug       String?          @unique
+  aliases    String[]         @default([])
+  candidates CandidateSkill[]
+  jobs       JobSkill[]
+}
+
+model CandidateProfile {
+  id                String            @id @default(cuid())
+  userId            String            @unique
+  user              User              @relation(fields: [userId], references: [id], onDelete: Cascade)
+  phone             String?
+  location          String?
+  headline          String?
+  bio               String?           @db.Text
+  professionId      String?
+  profession        Profession?       @relation(fields: [professionId], references: [id])
+  placeId           String?
+  place             Place?            @relation(fields: [placeId], references: [id])
+  yearsExperience   Int?
+  educationLevel    EducationLevel?
+  profileVisibility ProfileVisibility @default(APPLICANTS_ONLY)
+  createdAt         DateTime          @default(now())
+  updatedAt         DateTime          @updatedAt
+  cvs               CV[]
+  skills            CandidateSkill[]
+  experiences       Experience[]
+  applications      Application[]
+  matches           AIMatch[]
+
+  @@index([profileVisibility, professionId, placeId])
+}
+
+model CV {
+  id           String           @id @default(cuid())
+  candidateId  String
+  candidate    CandidateProfile @relation(fields: [candidateId], references: [id], onDelete: Cascade)
+  fileName     String
+  fileUrl      String
+  parsedText   String?          @db.Text
+  isActive     Boolean          @default(true)
+  uploadedAt   DateTime         @default(now())
+  applications Application[]
+
+  @@index([candidateId])
+}
+
+model CandidateSkill {
+  candidateId String
+  skillId     String
+  level       Int?
+  candidate   CandidateProfile @relation(fields: [candidateId], references: [id], onDelete: Cascade)
+  skill       Skill            @relation(fields: [skillId], references: [id], onDelete: Cascade)
+
+  @@id([candidateId, skillId])
+}
+
+model Experience {
+  id          String           @id @default(cuid())
+  candidateId String
+  candidate   CandidateProfile @relation(fields: [candidateId], references: [id], onDelete: Cascade)
+  title       String
+  companyName String
+  startDate   DateTime
+  endDate     DateTime?
+  description String?          @db.Text
+
+  @@index([candidateId])
+}
+
+model EmployerProfile {
+  id        String   @id @default(cuid())
+  userId    String   @unique
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  firstName String?
+  lastName  String?
+  jobTitle  String?
+  companyId String?
+  company   Company? @relation(fields: [companyId], references: [id])
+  createdAt DateTime @default(now())
+}
+
+model Company {
+  id                    String          @id @default(cuid())
+  name                  String
+  slug                  String?         @unique
+  patenteNumber         String?         @unique
+  employeeCount         Int?
+  description           String?         @db.Text
+  industry              String?
+  size                  CompanySize?
+  website               String?
+  contactEmail          String?
+  phone                 String?
+  address               String?
+  location              String?
+  placeId               String?
+  place                 Place?          @relation(fields: [placeId], references: [id])
+  logoKey               String?
+  hiringStatus          HiringStatus    @default(NOT_HIRING)
+  hiringNote            String?
+  hiringStatusUpdatedAt DateTime        @default(now())
+  employers             EmployerProfile[]
+  jobs                  Job[]
+  createdAt             DateTime        @default(now())
+  updatedAt             DateTime        @updatedAt
+}
+
 model Job {
   id                 String          @id @default(cuid())
   companyId          String
   company            Company         @relation(fields: [companyId], references: [id], onDelete: Cascade)
   title              String
-  description        String
+  description        String          @db.Text
   professionId       String?
   profession         Profession?     @relation(fields: [professionId], references: [id])
   experienceMinYears Int?
   educationLevel     EducationLevel?
-  contractType       ContractType
+  contractType       ContractType    @default(CDI)
   workMode           WorkMode        @default(ONSITE)
   salaryMin          Int?
   salaryMax          Int?
@@ -250,6 +256,7 @@ model Job {
   skills             JobSkill[]
   languages          JobLanguage[]
   applications       Application[]
+  matches            AIMatch[]
   createdAt          DateTime        @default(now())
   updatedAt          DateTime        @updatedAt
 
@@ -276,80 +283,23 @@ model JobLanguage {
   @@id([jobId, languageCode])
 }
 
-// ───────── Candidats et candidatures ─────────
-enum ProfileVisibility {
-  HIDDEN
-  APPLICANTS_ONLY
-  SEARCHABLE
-}
-
-enum ApplicationStatus {
-  PENDING
-  REVIEWING
-  SHORTLISTED
-  INTERVIEW
-  ACCEPTED
-  REJECTED
-  WITHDRAWN
-}
-
-model CandidateProfile {
-  id                String            @id @default(cuid())
-  userId            String            @unique
-  user              User              @relation(fields: [userId], references: [id], onDelete: Cascade)
-  fullName          String?
-  headline          String?
-  professionId      String?
-  profession        Profession?       @relation(fields: [professionId], references: [id])
-  placeId           String?
-  place             Place?            @relation(fields: [placeId], references: [id])
-  yearsExperience   Int?
-  educationLevel    EducationLevel?
-  profileVisibility ProfileVisibility @default(APPLICANTS_ONLY)
-  skills            CandidateSkill[]
-  applications      Application[]
-  createdAt         DateTime          @default(now())
-
-  @@index([profileVisibility, professionId, placeId])
-}
-
-model CandidateSkill {
-  candidateId String
-  skillId     String
-  candidate   CandidateProfile @relation(fields: [candidateId], references: [id], onDelete: Cascade)
-  skill       Skill            @relation(fields: [skillId], references: [id])
-=======
-  name       String           @unique
-  candidates CandidateSkill[]
-}
-
-model CandidateSkill {
-  candidateId String
-  skillId     String
-  level       Int?
-  candidate   CandidateProfile @relation(fields: [candidateId], references: [id], onDelete: Cascade)
-  skill       Skill            @relation(fields: [skillId], references: [id], onDelete: Cascade)
->>>>>>> main
-
-  @@id([candidateId, skillId])
-}
-
-<<<<<<< HEAD
 model Application {
   id              String                   @id @default(cuid())
-  jobId           String
-  job             Job                      @relation(fields: [jobId], references: [id])
   candidateId     String
-  candidate       CandidateProfile         @relation(fields: [candidateId], references: [id])
-  status          ApplicationStatus        @default(PENDING)
-  coverLetter     String?
+  candidate       CandidateProfile         @relation(fields: [candidateId], references: [id], onDelete: Cascade)
+  jobId           String
+  job             Job                      @relation(fields: [jobId], references: [id], onDelete: Cascade)
+  cvId            String?
+  cv              CV?                      @relation(fields: [cvId], references: [id], onDelete: SetNull)
+  coverLetter     String?                  @db.Text
+  status          ApplicationStatus         @default(PENDING)
   internalNote    String?
   statusUpdatedAt DateTime                 @default(now())
   events          ApplicationStatusEvent[]
   createdAt       DateTime                 @default(now())
   updatedAt       DateTime                 @updatedAt
 
-  @@unique([jobId, candidateId])
+  @@unique([candidateId, jobId])
   @@index([jobId, status])
 }
 
@@ -360,63 +310,12 @@ model ApplicationStatusEvent {
   fromStatus         ApplicationStatus
   toStatus           ApplicationStatus
   changedById        String
+  changedBy          User              @relation(fields: [changedById], references: [id])
   messageToCandidate String?
   interviewAt        DateTime?
   createdAt          DateTime          @default(now())
 
   @@index([applicationId, createdAt])
-=======
-model Experience {
-  id          String           @id @default(cuid())
-  candidateId String
-  candidate   CandidateProfile @relation(fields: [candidateId], references: [id], onDelete: Cascade)
-  title       String
-  companyName String
-  startDate   DateTime
-  endDate     DateTime?
-  description String?          @db.Text
-
-  @@index([candidateId])
-}
-
-model Company {
-  id          String   @id @default(cuid())
-  name        String
-  location    String?
-  description String?  @db.Text
-  createdAt   DateTime @default(now())
-  jobs        Job[]
-}
-
-model Job {
-  id           String        @id @default(cuid())
-  companyId    String
-  company      Company       @relation(fields: [companyId], references: [id], onDelete: Cascade)
-  title        String
-  description  String        @db.Text
-  location     String?
-  type         JobType       @default(FULL_TIME)
-  status       JobStatus     @default(OPEN)
-  createdAt    DateTime      @default(now())
-  applications Application[]
-  matches      AIMatch[]
-
-  @@index([companyId])
-}
-
-model Application {
-  id          String            @id @default(cuid())
-  candidateId String
-  candidate   CandidateProfile  @relation(fields: [candidateId], references: [id], onDelete: Cascade)
-  jobId       String
-  job         Job               @relation(fields: [jobId], references: [id], onDelete: Cascade)
-  cvId        String?
-  cv          CV?               @relation(fields: [cvId], references: [id], onDelete: SetNull)
-  coverLetter String?           @db.Text
-  status      ApplicationStatus @default(PENDING)
-  createdAt   DateTime          @default(now())
-
-  @@unique([candidateId, jobId])
 }
 
 model AIMatch {
@@ -429,5 +328,4 @@ model AIMatch {
   createdAt   DateTime         @default(now())
 
   @@unique([candidateId, jobId])
->>>>>>> main
 }
