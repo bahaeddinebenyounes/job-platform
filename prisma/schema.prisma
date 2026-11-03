@@ -11,8 +11,6 @@ datasource db {
 enum Role {
   CANDIDATE
   EMPLOYER
-  PROFESSIONAL
-  CLIENT
   ADMIN
 }
 
