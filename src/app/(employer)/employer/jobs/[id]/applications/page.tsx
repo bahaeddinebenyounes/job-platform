@@ -71,7 +71,7 @@ export default async function JobApplicationsPage({ params, searchParams }: {
           <li key={a.id} className="space-y-3 rounded-md border p-4">
             <div className="flex items-start justify-between gap-4">
               <div>
-                <p className="font-medium">{a.candidate.fullName ?? "Candidat"}</p>
+                <p className="font-medium">{a.candidate.user.name}</p>
                 <p className="text-sm text-gray-600">{a.candidate.headline}</p>
                 <p className="text-xs text-gray-500">
                   Reçue le {a.createdAt.toLocaleDateString("fr-FR")}

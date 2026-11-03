@@ -4,6 +4,7 @@ import { PrismaClient, type Role } from "../src/generated/prisma/client";
 
 const adapter = new PrismaPg({ connectionString: process.env.DATABASE_URL });
 const prisma = new PrismaClient({ adapter });
+const passwordHash = "$2b$10$elgXH2On.ax0uLA1SebyquzM2PR66.d7trhQRsYyzhdvJTpqdSxji";
 
 const places = [
   { name: "Tunis", governorate: "Tunis", latitude: 36.8065, longitude: 10.1815 },
@@ -12,10 +13,10 @@ const places = [
   { name: "Sfax", governorate: "Sfax", latitude: 34.7406, longitude: 10.7603 },
 ];
 
-const users: { email: string; role: Role }[] = [
-  { email: "employer@test.local", role: "EMPLOYER" },
-  { email: "employer2@test.local", role: "EMPLOYER" },
-  { email: "candidate@test.local", role: "CANDIDATE" },
+const users: { email: string; name: string; role: Role }[] = [
+  { email: "employer@test.local", name: "Employeur Test", role: "EMPLOYER" },
+  { email: "employer2@test.local", name: "Employeur Test 2", role: "EMPLOYER" },
+  { email: "candidate@test.local", name: "Candidat Test", role: "CANDIDATE" },
 ];
 
 const professions = [
@@ -47,15 +48,19 @@ async function main() {
   for (const u of users) {
     await prisma.user.upsert({
       where: { email: u.email },
-      update: { role: u.role },
-      create: u,
+      update: { name: u.name, passwordHash, role: u.role },
+      create: { ...u, passwordHash },
     });
   }
   for (const p of professions) {
     await prisma.profession.upsert({ where: { slug: p.slug }, update: p, create: p });
   }
   for (const s of skills) {
-    await prisma.skill.upsert({ where: { slug: s.slug }, update: s, create: s });
+    await prisma.skill.upsert({
+      where: { name: s.name },
+      update: { slug: s.slug, aliases: s.aliases },
+      create: s,
+    });
   }
   console.log("Seed terminé : 4 villes, 3 utilisateurs, 6 métiers, 6 compétences.");
 }

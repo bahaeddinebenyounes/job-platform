@@ -2,7 +2,9 @@ import { prisma } from "@/lib/prisma";
 import type { ApplicationStatus } from "@/generated/prisma/client";
 
 // Le candidat n'expose ni email ni téléphone : seulement ce qui est nécessaire.
-const candidateSelect = { select: { id: true, fullName: true, headline: true } } as const;
+const candidateSelect = {
+  select: { id: true, headline: true, user: { select: { name: true } } },
+} as const;
 
 export const applicationRepository = {
   // Toujours filtré par job.companyId : impossible de lire les candidatures d'une autre entreprise.
