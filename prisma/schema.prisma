@@ -1,9 +1,3 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
-
-// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
-// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
-
 generator client {
   provider = "prisma-client"
   output   = "../src/generated/prisma"
@@ -12,4 +6,278 @@ generator client {
 datasource db {
   provider = "postgresql"
   url      = env("DATABASE_URL")
+}
+
+// ───────── Utilisateurs ─────────
+enum Role {
+  CANDIDATE
+  EMPLOYER
+  PROFESSIONAL
+  CLIENT
+  ADMIN
+}
+
+model User {
+  id               String            @id @default(cuid())
+  email            String            @unique
+  role             Role
+  createdAt        DateTime          @default(now())
+  employerProfile  EmployerProfile?
+  candidateProfile CandidateProfile?
+}
+
+// ───────── Référentiels ─────────
+model Place {
+  id          String             @id @default(cuid())
+  name        String
+  governorate String
+  latitude    Float
+  longitude   Float
+  companies   Company[]
+  jobs        Job[]
+  candidates  CandidateProfile[]
+
+  @@unique([governorate, name])
+}
+
+model Profession {
+  id         String             @id @default(cuid())
+  slug       String             @unique
+  nameFr     String
+  category   String
+  jobs       Job[]
+  candidates CandidateProfile[]
+}
+
+model Skill {
+  id         String           @id @default(cuid())
+  slug       String           @unique
+  name       String
+  aliases    String[]
+  jobs       JobSkill[]
+  candidates CandidateSkill[]
+}
+
+// ───────── Entreprise ─────────
+enum CompanySize {
+  SIZE_1_10
+  SIZE_11_50
+  SIZE_51_200
+  SIZE_201_1000
+  SIZE_1000_PLUS
+}
+
+enum HiringStatus {
+  ACTIVELY_HIRING
+  OPEN_TO_APPLICATIONS
+  NOT_HIRING
+}
+
+model EmployerProfile {
+  id        String   @id @default(cuid())
+  userId    String   @unique
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  firstName String?
+  lastName  String?
+  jobTitle  String?
+  companyId String?
+  company   Company? @relation(fields: [companyId], references: [id])
+  createdAt DateTime @default(now())
+}
+
+model Company {
+  id            String       @id @default(cuid())
+  name          String
+  slug          String       @unique
+  patenteNumber String?      @unique
+  employeeCount Int?
+  description   String?
+  industry      String?
+  size          CompanySize?
+  website       String?
+  contactEmail  String?
+  phone         String?
+  address       String?
+  placeId       String?
+  place         Place?       @relation(fields: [placeId], references: [id])
+  logoKey       String?
+
+  hiringStatus          HiringStatus @default(NOT_HIRING)
+  hiringNote            String?
+  hiringStatusUpdatedAt DateTime     @default(now())
+
+  employers EmployerProfile[]
+  jobs      Job[]
+  createdAt DateTime          @default(now())
+  updatedAt DateTime          @updatedAt
+}
+
+// ───────── Offres d'emploi ─────────
+enum JobStatus {
+  DRAFT
+  PUBLISHED
+  CLOSED
+  EXPIRED
+}
+
+enum ContractType {
+  CDI
+  CDD
+  INTERNSHIP
+  FREELANCE
+  PART_TIME
+  APPRENTICESHIP
+}
+
+enum WorkMode {
+  ONSITE
+  HYBRID
+  REMOTE
+}
+
+enum EducationLevel {
+  NONE
+  BAC
+  BAC_PLUS_2
+  LICENCE
+  MASTER
+  ENGINEER
+  DOCTORATE
+}
+
+enum LanguageLevel {
+  A1
+  A2
+  B1
+  B2
+  C1
+  C2
+  NATIVE
+}
+
+model Job {
+  id                 String          @id @default(cuid())
+  companyId          String
+  company            Company         @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  title              String
+  description        String
+  professionId       String?
+  profession         Profession?     @relation(fields: [professionId], references: [id])
+  experienceMinYears Int?
+  educationLevel     EducationLevel?
+  contractType       ContractType
+  workMode           WorkMode        @default(ONSITE)
+  salaryMin          Int?
+  salaryMax          Int?
+  salaryCurrency     String          @default("TND")
+  placeId            String?
+  place              Place?          @relation(fields: [placeId], references: [id])
+  status             JobStatus       @default(DRAFT)
+  publishedAt        DateTime?
+  deadline           DateTime?
+  skills             JobSkill[]
+  languages          JobLanguage[]
+  applications       Application[]
+  createdAt          DateTime        @default(now())
+  updatedAt          DateTime        @updatedAt
+
+  @@index([companyId, status])
+  @@index([status, publishedAt])
+}
+
+model JobSkill {
+  jobId    String
+  skillId  String
+  required Boolean @default(true)
+  job      Job     @relation(fields: [jobId], references: [id], onDelete: Cascade)
+  skill    Skill   @relation(fields: [skillId], references: [id])
+
+  @@id([jobId, skillId])
+}
+
+model JobLanguage {
+  jobId        String
+  languageCode String
+  minLevel     LanguageLevel
+  job          Job           @relation(fields: [jobId], references: [id], onDelete: Cascade)
+
+  @@id([jobId, languageCode])
+}
+
+// ───────── Candidats et candidatures ─────────
+enum ProfileVisibility {
+  HIDDEN
+  APPLICANTS_ONLY
+  SEARCHABLE
+}
+
+enum ApplicationStatus {
+  PENDING
+  REVIEWING
+  SHORTLISTED
+  INTERVIEW
+  ACCEPTED
+  REJECTED
+  WITHDRAWN
+}
+
+model CandidateProfile {
+  id                String            @id @default(cuid())
+  userId            String            @unique
+  user              User              @relation(fields: [userId], references: [id], onDelete: Cascade)
+  fullName          String?
+  headline          String?
+  professionId      String?
+  profession        Profession?       @relation(fields: [professionId], references: [id])
+  placeId           String?
+  place             Place?            @relation(fields: [placeId], references: [id])
+  yearsExperience   Int?
+  educationLevel    EducationLevel?
+  profileVisibility ProfileVisibility @default(APPLICANTS_ONLY)
+  skills            CandidateSkill[]
+  applications      Application[]
+  createdAt         DateTime          @default(now())
+
+  @@index([profileVisibility, professionId, placeId])
+}
+
+model CandidateSkill {
+  candidateId String
+  skillId     String
+  candidate   CandidateProfile @relation(fields: [candidateId], references: [id], onDelete: Cascade)
+  skill       Skill            @relation(fields: [skillId], references: [id])
+
+  @@id([candidateId, skillId])
+}
+
+model Application {
+  id              String                   @id @default(cuid())
+  jobId           String
+  job             Job                      @relation(fields: [jobId], references: [id])
+  candidateId     String
+  candidate       CandidateProfile         @relation(fields: [candidateId], references: [id])
+  status          ApplicationStatus        @default(PENDING)
+  coverLetter     String?
+  internalNote    String?
+  statusUpdatedAt DateTime                 @default(now())
+  events          ApplicationStatusEvent[]
+  createdAt       DateTime                 @default(now())
+  updatedAt       DateTime                 @updatedAt
+
+  @@unique([jobId, candidateId])
+  @@index([jobId, status])
+}
+
+model ApplicationStatusEvent {
+  id                 String            @id @default(cuid())
+  applicationId      String
+  application        Application       @relation(fields: [applicationId], references: [id], onDelete: Cascade)
+  fromStatus         ApplicationStatus
+  toStatus           ApplicationStatus
+  changedById        String
+  messageToCandidate String?
+  interviewAt        DateTime?
+  createdAt          DateTime          @default(now())
+
+  @@index([applicationId, createdAt])
 }
