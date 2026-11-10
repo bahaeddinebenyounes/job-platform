@@ -1,0 +1,8 @@
+http://localhost:3000/login
+Password123!
+employer@test.local
+
+/employer/jobs/new
+http://localhost:3000/employer/candidates
+
+/employer/company/new

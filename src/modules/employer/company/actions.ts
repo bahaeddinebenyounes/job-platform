@@ -28,7 +28,7 @@ export async function createCompanyAction(_: FormState, fd: FormData): Promise<F
     console.error(e);
     return { message: "Une erreur est survenue" };
   }
-  redirect("/employer/company"); // hors du try/catch : redirect lève une exception
+  redirect("/employer/dashboard"); // hors du try/catch : redirect lève une exception
 }
 export async function updateHiringStatusAction(_: FormState, fd: FormData): Promise<FormState> {
   const parsed = hiringStatusSchema.safeParse(Object.fromEntries(fd));
