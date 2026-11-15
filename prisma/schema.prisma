@@ -63,10 +63,11 @@ model CandidateProfile {
   createdAt    DateTime         @default(now())
   updatedAt    DateTime         @updatedAt
   cvs          CV[]
-  skills       CandidateSkill[]
-  experiences  Experience[]
   applications Application[]
   matches      AIMatch[]
+  skills       CandidateSkill[]
+  experiences  Experience[]
+  educations   Education[]
 }
 
 model CV {
@@ -105,13 +106,28 @@ model Experience {
   candidate   CandidateProfile @relation(fields: [candidateId], references: [id], onDelete: Cascade)
   title       String
   companyName String
+  location    String?
   startDate   DateTime
   endDate     DateTime?
+  isCurrent   Boolean          @default(false)
   description String?          @db.Text
 
   @@index([candidateId])
 }
+model Education {
+  id          String           @id @default(cuid())
+  candidateId String
+  candidate   CandidateProfile @relation(fields: [candidateId], references: [id], onDelete: Cascade)
+  degree      String
+  field       String?
+  school      String
+  startDate   DateTime
+  endDate     DateTime?
+  isCurrent   Boolean          @default(false)
+  description String?          @db.Text
 
+  @@index([candidateId])
+}
 model Company {
   id          String   @id @default(cuid())
   name        String
