@@ -31,11 +31,11 @@ export default async function CandidateHome({ userId, name }: Props) {
       where: {
         candidateId: profile.id,
         job: {
-          status: "OPEN",
+            status: "PUBLISHED",
           applications: { none: { candidateId: profile.id } },
         },
       },
-      include: { job: { include: { company: true } } },
+      include: { job: { include: { company: true, place: true } } },
       orderBy: { score: "desc" },
       take: 4,
     }),
@@ -127,12 +127,12 @@ export default async function CandidateHome({ userId, name }: Props) {
                     <p className="truncate text-sm text-muted">
                       {match.job.company.name}
                     </p>
-                    {match.job.location && (
-                      <p className="mt-0.5 flex items-center gap-1 text-xs text-muted">
-                        <MapPin size={12} />
-                        {match.job.location}
-                      </p>
-                    )}
+                    {match.job.place && (
+  <p className="mt-0.5 flex items-center gap-1 text-xs text-muted">
+    <MapPin size={12} />
+    {match.job.place.name}, {match.job.place.governorate}
+  </p>
+)}
                   </div>
                 </li>
               ))}

@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { CheckCircle2, Clock3 } from "lucide-react";
 import { requireEmployerCompanyPage } from "@/lib/authz/pages";
 import { getDashboard } from "@/modules/employer/dashboard/service";
 import { APPLICATION_LABELS } from "@/modules/employer/applications/constants";
@@ -7,9 +8,13 @@ import { logoUrl } from "@/lib/storage/logo";
 
 function Stat({ label, value, href }: { label: string; value: number; href?: string }) {
   const body = (
-    <div className="rounded-md border bg-white p-4">
+    <div
+      className={`rounded-2xl border border-line bg-surface p-4 ${
+        href ? "transition hover:border-brand" : ""
+      }`}
+    >
       <p className="text-3xl font-semibold">{value}</p>
-      <p className="text-sm text-gray-600">{label}</p>
+      <p className="text-sm text-muted">{label}</p>
     </div>
   );
   return href ? <Link href={href}>{body}</Link> : body;
@@ -33,20 +38,26 @@ export default async function DashboardPage() {
   const logo = logoUrl(d.company?.logoKey);
 
   return (
-    <main className="mx-auto max-w-5xl space-y-8 p-6">
-      <header className="flex items-center gap-4">
+    <main className="mx-auto flex max-w-5xl flex-col gap-8 p-6">
+      <header className="flex items-center gap-4 rounded-2xl bg-brand p-6 text-white">
         {logo && (
           // eslint-disable-next-line @next/next/no-img-element
-          <img src={logo} alt="Logo" className="h-16 w-16 rounded-md border object-cover" />
+          <img
+            src={logo}
+            alt="Logo"
+            className="h-16 w-16 rounded-xl border-2 border-white/30 bg-white object-cover"
+          />
         )}
         <div>
           <h1 className="text-2xl font-semibold">{d.company?.name}</h1>
-          {d.company && <p className="text-sm text-gray-600">{HIRING_LABELS[d.company.hiringStatus]}</p>}
+          {d.company && (
+            <p className="text-sm text-white/80">{HIRING_LABELS[d.company.hiringStatus]}</p>
+          )}
         </div>
       </header>
 
-      <section className="space-y-3">
-        <h2 className="text-lg font-medium">Offres</h2>
+      <section className="flex flex-col gap-3">
+        <h2 className="text-lg font-semibold">Offres</h2>
         <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
           <Stat label="Publiées" value={d.jobs.published} href="/employer/jobs?status=PUBLISHED" />
           <Stat label="Brouillons" value={d.jobs.draft} href="/employer/jobs?status=DRAFT" />
@@ -55,8 +66,8 @@ export default async function DashboardPage() {
         </div>
       </section>
 
-      <section className="space-y-3">
-        <h2 className="text-lg font-medium">Candidatures ({d.apps.total})</h2>
+      <section className="flex flex-col gap-3">
+        <h2 className="text-lg font-semibold">Candidatures ({d.apps.total})</h2>
         <div className="grid grid-cols-2 gap-3 sm:grid-cols-5">
           <Stat label="En attente" value={d.apps.pending} />
           <Stat label="Présélectionnés" value={d.apps.shortlisted} />
@@ -66,39 +77,67 @@ export default async function DashboardPage() {
         </div>
       </section>
 
-      <section className="space-y-3">
-        <h2 className="text-lg font-medium">Dernières candidatures</h2>
-        <ul className="space-y-2">
-          {d.recent.map((a) => (
-            <li key={a.id} className="flex items-center justify-between rounded-md border bg-white p-3 text-sm">
-              <span>
-                <strong>{a.candidate.user.name}</strong> · {a.job.title}
-              </span>
-              <span className="flex items-center gap-3">
-                <span className="text-gray-500">{a.createdAt.toLocaleDateString("fr-FR")}</span>
-                <span className="rounded-full bg-gray-100 px-2 py-0.5 text-xs">{APPLICATION_LABELS[a.status]}</span>
-                <Link href={`/employer/jobs/${a.job.id}/applications`} className="text-blue-600 hover:underline">
-                  Voir
-                </Link>
-              </span>
-            </li>
-          ))}
-          {d.recent.length === 0 && <p className="text-sm text-gray-500">Aucune candidature pour le moment.</p>}
-        </ul>
+      <section className="flex flex-col gap-3">
+        <h2 className="text-lg font-semibold">Dernières candidatures</h2>
+        {d.recent.length === 0 ? (
+          <div className="rounded-2xl border border-dashed border-line bg-surface p-6 text-center text-sm text-muted">
+            Aucune candidature pour le moment.
+          </div>
+        ) : (
+          <ul className="divide-y divide-line rounded-2xl border border-line bg-surface">
+            {d.recent.map((a) => (
+              <li
+                key={a.id}
+                className="flex flex-wrap items-center justify-between gap-2 p-4 text-sm"
+              >
+                <span>
+                  <strong className="font-medium">{a.candidate.user.name}</strong>
+                  <span className="text-muted"> · {a.job.title}</span>
+                </span>
+                <span className="flex items-center gap-3">
+                  <span className="text-muted">{a.createdAt.toLocaleDateString("fr-FR")}</span>
+                  <span className="rounded-full bg-brand-soft px-2.5 py-0.5 text-xs font-medium text-brand">
+                    {APPLICATION_LABELS[a.status]}
+                  </span>
+                  <Link
+                    href={`/employer/jobs/${a.job.id}/applications`}
+                    className="font-medium text-brand hover:text-brand-hover"
+                  >
+                    Voir
+                  </Link>
+                </span>
+              </li>
+            ))}
+          </ul>
+        )}
       </section>
 
       <section className="grid gap-3 sm:grid-cols-2">
-        <Stat label="Candidats visibles dans la recherche" value={d.searchable} href="/employer/candidates" />
-        <Link href="/employer/jobs/new" className="flex items-center justify-center rounded-md bg-blue-600 p-4 text-white">
+        <Stat
+          label="Candidats visibles dans la recherche"
+          value={d.searchable}
+          href="/employer/candidates"
+        />
+        <Link
+          href="/employer/jobs/new"
+          className="flex items-center justify-center rounded-2xl bg-brand p-4 font-medium text-white transition hover:bg-brand-hover"
+        >
           Publier une nouvelle offre
         </Link>
       </section>
 
-      <section className="space-y-2 rounded-md border bg-white p-4">
-        <h2 className="text-lg font-medium">Avancement du module Employer</h2>
-        <ul className="space-y-1 text-sm">
+      <section className="rounded-2xl border border-line bg-surface p-5">
+        <h2 className="mb-3 text-lg font-semibold">Avancement du module Employer</h2>
+        <ul className="flex flex-col gap-2 text-sm">
           {FEATURES.map((f) => (
-            <li key={f.label}>{f.done ? "✅" : "⏳"} {f.label}</li>
+            <li key={f.label} className="flex items-center gap-2">
+              {f.done ? (
+                <CheckCircle2 size={18} className="shrink-0 text-brand" />
+              ) : (
+                <Clock3 size={18} className="shrink-0 text-muted" />
+              )}
+              <span className={f.done ? "" : "text-muted"}>{f.label}</span>
+            </li>
           ))}
         </ul>
       </section>

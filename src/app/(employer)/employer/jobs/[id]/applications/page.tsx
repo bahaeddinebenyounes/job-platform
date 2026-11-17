@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
+import { ArrowLeft } from "lucide-react";
 import type { ApplicationStatus } from "@/generated/prisma/client";
 import { requireEmployerCompanyPage } from "@/lib/authz/pages";
 import { AppError } from "@/lib/errors";
@@ -11,13 +12,13 @@ import {
 } from "@/modules/employer/applications/constants";
 
 const BADGE: Record<string, string> = {
-  PENDING: "bg-gray-100 text-gray-700",
-  REVIEWING: "bg-blue-100 text-blue-800",
-  SHORTLISTED: "bg-purple-100 text-purple-800",
-  INTERVIEW: "bg-amber-100 text-amber-800",
-  ACCEPTED: "bg-green-100 text-green-800",
-  REJECTED: "bg-red-100 text-red-800",
-  WITHDRAWN: "bg-gray-100 text-gray-500",
+  PENDING: "bg-page text-muted",
+  REVIEWING: "bg-sky-50 text-sky-700",
+  SHORTLISTED: "bg-accent-soft text-amber-800",
+  INTERVIEW: "bg-violet-50 text-violet-700",
+  ACCEPTED: "bg-brand-soft text-brand",
+  REJECTED: "bg-red-50 text-red-700",
+  WITHDRAWN: "bg-page text-muted",
 };
 
 const ACTION_LABELS: Record<string, string> = {
@@ -27,6 +28,9 @@ const ACTION_LABELS: Record<string, string> = {
   ACCEPTED: "Accepter",
   REJECTED: "Refuser",
 };
+
+const field =
+  "rounded-lg border border-line bg-surface px-3 py-2 text-sm outline-none transition focus:border-brand focus:ring-2 focus:ring-brand/20";
 
 export default async function JobApplicationsPage({ params, searchParams }: {
   params: Promise<{ id: string }>;
@@ -47,56 +51,88 @@ export default async function JobApplicationsPage({ params, searchParams }: {
   const apps = await listApplications(companyId, id, status);
 
   return (
-    <main className="mx-auto max-w-4xl space-y-6 p-6">
+    <main className="mx-auto flex max-w-4xl flex-col gap-6 p-6">
       <div>
-        <Link href="/employer/jobs" className="text-sm text-blue-600 hover:underline">← Mes offres</Link>
+        <Link
+          href="/employer/jobs"
+          className="inline-flex items-center gap-1 text-sm font-medium text-brand hover:text-brand-hover"
+        >
+          <ArrowLeft size={16} /> Mes offres
+        </Link>
         <h1 className="mt-2 text-2xl font-semibold">Candidatures : {job.title}</h1>
       </div>
 
-      {sp.error && <p className="rounded-md bg-red-50 p-3 text-sm text-red-700">{sp.error}</p>}
+      {sp.error && (
+        <p className="rounded-lg bg-red-50 p-3 text-sm text-red-700">{sp.error}</p>
+      )}
 
       <form className="flex gap-2">
-        <select name="status" defaultValue={sp.status ?? ""}
-          className="rounded-md border border-gray-300 px-3 py-2 text-sm">
+        <select name="status" defaultValue={sp.status ?? ""} className={field}>
           <option value="">Tous les statuts</option>
           {APPLICATION_STATUSES.map((s) => (
             <option key={s} value={s}>{APPLICATION_LABELS[s]}</option>
           ))}
         </select>
-        <button className="rounded-md border px-3 py-2 text-sm">Filtrer</button>
+        <button className="inline-flex items-center justify-center rounded-lg border border-line bg-surface px-4 py-2 text-sm font-medium transition hover:bg-page">
+          Filtrer
+        </button>
       </form>
 
-      <ul className="space-y-4">
+      {apps.length === 0 && (
+        <div className="rounded-2xl border border-dashed border-line bg-surface p-8 text-center text-sm text-muted">
+          Aucune candidature.
+        </div>
+      )}
+
+      <ul className="flex flex-col gap-4">
         {apps.map((a) => (
-          <li key={a.id} className="space-y-3 rounded-md border p-4">
+          <li
+            key={a.id}
+            className="flex flex-col gap-3 rounded-2xl border border-line bg-surface p-4"
+          >
             <div className="flex items-start justify-between gap-4">
               <div>
                 <p className="font-medium">{a.candidate.user.name}</p>
-                <p className="text-sm text-gray-600">{a.candidate.headline}</p>
-                <p className="text-xs text-gray-500">
+                <p className="text-sm text-muted">{a.candidate.headline}</p>
+                <p className="text-xs text-muted">
                   Reçue le {a.createdAt.toLocaleDateString("fr-FR")}
                 </p>
               </div>
-              <span className={`rounded-full px-3 py-1 text-xs font-medium ${BADGE[a.status]}`}>
+              <span
+                className={`shrink-0 rounded-full px-3 py-1 text-xs font-medium ${BADGE[a.status]}`}
+              >
                 {APPLICATION_LABELS[a.status]}
               </span>
             </div>
 
-            {a.coverLetter && <p className="whitespace-pre-line text-sm">{a.coverLetter}</p>}
+            {a.coverLetter && (
+              <p className="whitespace-pre-line rounded-lg bg-page p-3 text-sm">
+                {a.coverLetter}
+              </p>
+            )}
 
             {(TRANSITIONS[a.status] ?? []).length > 0 && (
-              <div className="flex flex-wrap items-end gap-3">
+              <div className="flex flex-wrap items-end gap-3 border-t border-line pt-3">
                 {(TRANSITIONS[a.status] ?? []).map((to) => (
                   <form key={to} action={changeStatusAction} className="flex items-end gap-2">
                     <input type="hidden" name="applicationId" value={a.id} />
                     <input type="hidden" name="jobId" value={id} />
                     <input type="hidden" name="toStatus" value={to} />
                     {to === "INTERVIEW" && (
-                      <input type="datetime-local" name="interviewAt" required
-                        className="rounded-md border border-gray-300 px-2 py-1 text-sm" />
+                      <input
+                        type="datetime-local"
+                        name="interviewAt"
+                        required
+                        className={field}
+                      />
                     )}
-                    <button className={`rounded-md px-3 py-1.5 text-sm text-white ${
-                      to === "REJECTED" ? "bg-red-600" : "bg-blue-600"}`}>
+                    <button
+                      className={`rounded-lg px-3 py-1.5 text-sm font-medium text-white transition ${
+                        to === "REJECTED"
+                          ? "bg-red-600 hover:bg-red-700"
+                          : "bg-brand hover:bg-brand-hover"
+                      }`}
+                    >
                       {ACTION_LABELS[to]}
                     </button>
                   </form>
@@ -105,7 +141,6 @@ export default async function JobApplicationsPage({ params, searchParams }: {
             )}
           </li>
         ))}
-        {apps.length === 0 && <p className="text-sm text-gray-500">Aucune candidature.</p>}
       </ul>
     </main>
   );

@@ -12,8 +12,13 @@ const CANDIDATE_NAV: NavItem[] = [
 ];
 
 // Your colleague adds the employer links here
-const EMPLOYER_NAV: NavItem[] = [{ href: "/home", label: "Home", icon: "home" }];
-
+const EMPLOYER_NAV: NavItem[] = [
+  { href: "/employer/dashboard", label: "Accueil", icon: "dashboard" },
+  { href: "/employer/company", label: "Entreprise", icon: "company" },
+  { href: "/employer/jobs", label: "Offres", icon: "jobs" },
+  { href: "/employer/candidates", label: "Candidats", icon: "candidates" },
+  { href: "/employer/posts", label: "Publications", icon: "posts" },
+];
 function initials(name?: string | null) {
   if (!name) return "?";
   return name

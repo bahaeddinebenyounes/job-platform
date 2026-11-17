@@ -8,6 +8,10 @@ import {
   FileText,
   Briefcase,
   Sparkles,
+  LayoutDashboard,
+  Building2,
+  Users,
+  Newspaper,
 } from "lucide-react";
 
 const ICONS = {
@@ -16,6 +20,11 @@ const ICONS = {
   cv: FileText,
   applications: Briefcase,
   recommendations: Sparkles,
+  dashboard: LayoutDashboard,
+  company: Building2,
+  jobs: Briefcase,
+  candidates: Users,
+  posts: Newspaper,
 };
 
 export type NavItem = {

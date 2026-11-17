@@ -19,11 +19,11 @@ export default async function RecommendationsPage() {
     where: {
       candidateId: profile.id,
       job: {
-        status: "OPEN",
+         status: "PUBLISHED",
         applications: { none: { candidateId: profile.id } },
       },
     },
-    include: { job: { include: { company: true } } },
+    include: { job: { include: { company: true, place: true } } },
     orderBy: { score: "desc" },
   });
 
@@ -76,10 +76,10 @@ export default async function RecommendationsPage() {
               <p className="truncate text-sm text-muted">
                 {match.job.company.name}
               </p>
-              {match.job.location && (
+              {match.job.place && (
                 <p className="mt-0.5 flex items-center gap-1 text-xs text-muted">
                   <MapPin size={12} />
-                  {match.job.location}
+                  {match.job.place.name}, {match.job.place.governorate}
                 </p>
               )}
             </div>

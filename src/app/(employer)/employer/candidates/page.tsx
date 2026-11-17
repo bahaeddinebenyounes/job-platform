@@ -4,7 +4,8 @@ import {
 } from "@/modules/employer/candidates/service";
 import { EDUCATION_LABELS } from "@/modules/employer/jobs/constants";
 
-const sel = "rounded-md border border-gray-300 px-3 py-2 text-sm";
+const field =
+  "w-full rounded-lg border border-line bg-surface px-3 py-2 text-sm outline-none transition focus:border-brand focus:ring-2 focus:ring-brand/20";
 
 export default async function CandidatesPage({ searchParams }: {
   searchParams: Promise<{ professionId?: string; placeId?: string; years?: string; skill?: string | string[] }>;
@@ -25,48 +26,86 @@ export default async function CandidatesPage({ searchParams }: {
   ]);
 
   return (
-    <main className="mx-auto max-w-4xl space-y-6 p-6">
+    <main className="mx-auto flex max-w-4xl flex-col gap-6 p-6">
       <h1 className="text-2xl font-semibold">Rechercher des candidats</h1>
 
-      <form className="space-y-3 rounded-md border p-4">
+      <form className="flex flex-col gap-4 rounded-2xl border border-line bg-surface p-5">
         <div className="grid gap-3 sm:grid-cols-3">
-          <select name="professionId" defaultValue={sp.professionId ?? ""} className={sel}>
+          <select name="professionId" defaultValue={sp.professionId ?? ""} className={field}>
             <option value="">Tous les métiers</option>
             {professions.map((p) => <option key={p.id} value={p.id}>{p.nameFr}</option>)}
           </select>
-          <select name="placeId" defaultValue={sp.placeId ?? ""} className={sel}>
+          <select name="placeId" defaultValue={sp.placeId ?? ""} className={field}>
             <option value="">Toutes les villes</option>
             {places.map((p) => <option key={p.id} value={p.id}>{p.name}</option>)}
           </select>
-          <input name="years" type="number" min={0} defaultValue={sp.years}
-            placeholder="Expérience min. (ans)" className={sel} />
+          <input
+            name="years"
+            type="number"
+            min={0}
+            defaultValue={sp.years}
+            placeholder="Expérience min. (ans)"
+            className={field}
+          />
         </div>
-        <div className="flex flex-wrap gap-3">
+
+        <div className="flex flex-wrap gap-2">
           {skills.map((s) => (
-            <label key={s.id} className="flex items-center gap-1 text-sm">
-              <input type="checkbox" name="skill" value={s.id} defaultChecked={skillIds.includes(s.id)} />
+            <label
+              key={s.id}
+              className="flex cursor-pointer items-center gap-2 rounded-full border border-line bg-surface px-3 py-1 text-sm"
+            >
+              <input
+                type="checkbox"
+                name="skill"
+                value={s.id}
+                defaultChecked={skillIds.includes(s.id)}
+                className="accent-brand"
+              />
               {s.name}
             </label>
           ))}
         </div>
-        <button className="rounded-md bg-blue-600 px-4 py-2 text-sm text-white">Rechercher</button>
+
+        <button className="inline-flex items-center justify-center rounded-lg bg-brand px-4 py-2 text-sm font-medium text-white transition hover:bg-brand-hover sm:self-start">
+          Rechercher
+        </button>
       </form>
 
-      <p className="text-sm text-gray-600">{candidates.length} candidat(s)</p>
-      <ul className="space-y-3">
+      <p className="text-sm text-muted">{candidates.length} candidat(s)</p>
+
+      {candidates.length === 0 && (
+        <div className="rounded-2xl border border-dashed border-line bg-surface p-8 text-center text-sm text-muted">
+          Aucun candidat.
+        </div>
+      )}
+
+      <ul className="flex flex-col gap-3">
         {candidates.map((c) => (
-          <li key={c.id} className="rounded-md border p-4">
-            <p className="font-medium">{c.headline ?? c.profession?.nameFr ?? "Candidat"}</p>
-            <p className="text-sm text-gray-600">
+          <li key={c.id} className="rounded-2xl border border-line bg-surface p-4">
+            <p className="font-medium">
+              {c.headline ?? c.profession?.nameFr ?? "Candidat"}
+            </p>
+            <p className="text-sm text-muted">
               {[c.profession?.nameFr, c.place?.name,
                 c.yearsExperience != null && `${c.yearsExperience} ans d'expérience`,
                 c.educationLevel && EDUCATION_LABELS[c.educationLevel]]
                 .filter(Boolean).join(" · ")}
             </p>
-            <p className="mt-1 text-sm">{c.skills.map((s) => s.skill.name).join(", ")}</p>
+            {c.skills.length > 0 && (
+              <div className="mt-3 flex flex-wrap gap-2">
+                {c.skills.map((s) => (
+                  <span
+                    key={s.skill.name}
+                    className="rounded-full bg-brand-soft px-2.5 py-0.5 text-xs font-medium text-brand"
+                  >
+                    {s.skill.name}
+                  </span>
+                ))}
+              </div>
+            )}
           </li>
         ))}
-        {candidates.length === 0 && <p className="text-sm text-gray-500">Aucun candidat.</p>}
       </ul>
     </main>
   );
